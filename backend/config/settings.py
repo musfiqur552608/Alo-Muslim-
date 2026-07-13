@@ -24,7 +24,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "accounts",
     "prayer_times",
-    "corsheaders"
+    "corsheaders",
+    "core",
 ]
 
 MIDDLEWARE = [
