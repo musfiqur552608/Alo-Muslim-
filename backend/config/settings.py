@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "prayer_times",
     "corsheaders",
     "core",
+    "quran",
 ]
 
 MIDDLEWARE = [
