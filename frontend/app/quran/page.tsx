@@ -10,6 +10,7 @@ type Surah = {
     name_bengali: string;
     verses_count: number;
     revelation_place: string;
+    name_bn_pronunciation: string;
 };
 
 export default function QuranPage() {
@@ -35,6 +36,7 @@ export default function QuranPage() {
     const visibleSurahs = surahs.filter((s) => {
         const matchesQuery =
             q === "" ||
+            s.name_bn_pronunciation.includes(query.trim()) ||
             s.name_bengali.includes(query.trim()) ||
             s.name_simple.toLowerCase().includes(q);
 
@@ -79,12 +81,23 @@ export default function QuranPage() {
                             href={`/quran/${s.id}`}
                             className="flex items-center justify-between rounded-xl border p-4 hover:bg-emerald-50 transition"
                         >
-                            <div>
+                            {/* <div>
                                 <p className="font-semibold">
                                     {s.id}. {s.name_bengali}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                     {s.verses_count} আয়াত ·{" "}
+                                    {s.revelation_place === "makkah" ? "মাক্কী" : "মাদানী"}
+                                </p>
+                            </div>
+                            <span className="text-xl" dir="rtl">{s.name_arabic}</span> */}
+                            <div>
+                                <p className="font-semibold">
+                                    {s.id}. {s.name_bn_pronunciation}
+                                </p>
+                                <p className="text-xs text-gray-400">{s.name_simple}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    অর্থ: {s.name_bengali} · {s.verses_count} আয়াত ·{" "}
                                     {s.revelation_place === "makkah" ? "মাক্কী" : "মাদানী"}
                                 </p>
                             </div>

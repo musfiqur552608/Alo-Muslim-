@@ -1,5 +1,6 @@
 import requests
 from django.core.cache import cache
+from .transliterations_bn import SURAH_NAME_BN
 
 QURAN_BASE = "https://api.quran.com/api/v4"
 BN_TRANSLATION_ID = 161   
@@ -33,6 +34,7 @@ def get_surah_list() -> list[dict]:
             "name_arabic": c["name_arabic"],
             "name_simple": c["name_simple"],
             "name_bengali": c["translated_name"]["name"],
+            "name_bn_pronunciation": SURAH_NAME_BN.get(c["id"], c["name_simple"]),  # 🆕
             "verses_count": c["verses_count"],
             "revelation_place": c["revelation_place"],
         }
