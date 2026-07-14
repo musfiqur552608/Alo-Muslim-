@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import serializers
 
-from .services import get_surah_list,get_surah_verses, QuranUnavailable
+from .services import get_surah_audio, get_surah_list,get_surah_verses, QuranUnavailable
 
 
 class SurahListView(APIView):
@@ -39,3 +39,14 @@ class SurahVersesView(APIView):
             return Response({"detail": "আয়াত এই মুহূর্তে আনা যাচ্ছে না।"}, status=503)
 
         return Response(result)
+
+class SurahAudioView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, surah_id: int):
+        if not 1 <= surah_id <= 114:
+            return Response({"detail": "সূরা নম্বর ১-১১৪ এর মধ্যে হতে হবে।"}, status=404)
+        try:
+            return Response(get_surah_audio(surah_id))
+        except QuranUnavailable:
+            return Response({"detail": "অডিও এই মুহূর্তে আনা যাচ্ছে না।"}, status=503)

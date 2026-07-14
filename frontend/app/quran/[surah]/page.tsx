@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 type Verse = {
@@ -16,6 +16,7 @@ type VersesResponse = {
     verses: Verse[];
     pagination: { current_page: number; total_pages: number; has_next: boolean };
 };
+type VerseAudio = { verse_key: string; audio_url: string };
 
 // Same shape as the Surah type on the list page (lesson 4).
 type Surah = {
@@ -37,6 +38,9 @@ export default function SurahPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showTranslit, setShowTranslit] = useState(true);
+    const [audioList, setAudioList] = useState<VerseAudio[]>([]);
+    const [playingKey, setPlayingKey] = useState<string | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Fetch the surah list once and pick out this surah for the header.
     // The list is small (114 items) and server-cached, so no new endpoint needed.
@@ -77,6 +81,50 @@ export default function SurahPage() {
             .finally(() => setLoading(false));
     }, [surah, page]);
 
+    useEffect(() => {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/surahs/${surah}/audio/`)
+            .then((res) => (res.ok ? res.json() : []))
+            .then(setAudioList)
+            .catch(() => { });   // অডিও optional — হেডারের মতোই দর্শন
+    }, [surah]);
+
+    useEffect(() => {
+        return () => audioRef.current?.pause();
+    }, []);
+
+    const playVerse = (verseKey: string) => {
+        const item = audioList.find((a) => a.verse_key === verseKey);
+        if (!item) return;
+
+        // আগেরটা থামাও (একই আয়াতে আবার চাপলে = pause টগল)
+        if (audioRef.current) {
+            audioRef.current.pause();
+            if (playingKey === verseKey) {
+                setPlayingKey(null);
+                return;
+            }
+        }
+
+        const audio = new Audio(item.audio_url);
+        audioRef.current = audio;
+        setPlayingKey(verseKey);
+
+        audio.onended = () => {
+            const idx = audioList.findIndex((a) => a.verse_key === verseKey);
+            const next = audioList[idx + 1];
+            if (next) {
+                playVerse(next.verse_key);    // 🔁 auto-advance
+            } else {
+                setPlayingKey(null);          // সূরা শেষ
+            }
+        };
+
+        audio.play();
+    };
+
+    // কম্পোনেন্ট আনমাউন্টে অডিও যেন ভূতের মতো বাজতে না থাকে:
+    
+
     if (error) return <p className="p-8 text-red-600">{error}</p>;
 
     return (
@@ -110,7 +158,9 @@ export default function SurahPage() {
 
             <div className="space-y-6">
                 {verses.map((v) => (
-                    <article key={v.verse_key} className="rounded-xl border p-5">
+                    <article key={v.verse_key}
+                        className={`rounded-xl border p-5 ${playingKey === v.verse_key ? "border-emerald-500 bg-emerald-50" : ""
+                            }`}>
                         <p dir="rtl" className="mb-4 text-right text-3xl leading-loose">
                             {v.arabic}
                         </p>
@@ -122,6 +172,15 @@ export default function SurahPage() {
                         <p className="mb-2">{v.translation_bn}</p>
                         <p className="text-sm text-gray-600">{v.translation_en}</p>
                         <p className="mt-3 text-xs text-gray-400">{v.verse_key}</p>
+                        <div className="mt-3 flex items-center justify-between">
+                            <p className="text-xs text-gray-400">{v.verse_key}</p>
+                            <button
+                                onClick={() => playVerse(v.verse_key)}
+                                className="rounded-full border px-4 py-1 text-sm hover:bg-emerald-100"
+                            >
+                                {playingKey === v.verse_key ? "⏸ থামাও" : "▶ শুনুন"}
+                            </button>
+                        </div>
                     </article>
                 ))}
             </div>

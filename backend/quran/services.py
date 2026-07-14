@@ -7,6 +7,9 @@ BN_TRANSLATION_ID = 161
 EN_TRANSLATION_ID = 131
 VERSES_PER_PAGE = 20
 
+AUDIO_CDN_BASE = "https://verses.quran.com/"
+DEFAULT_RECITER_ID = 7
+
 
 class QuranUnavailable(Exception):
     pass
@@ -102,3 +105,36 @@ def _reshape_verse(v: dict) -> dict:
         "translation_bn": translations.get(BN_TRANSLATION_ID, ""),
         "translation_en": translations.get(EN_TRANSLATION_ID, ""),
     }
+    
+    
+AUDIO_CDN_BASE = "https://verses.quran.com/"
+DEFAULT_RECITER_ID = 7   # Mishari Rashid al-Afasy
+
+
+def get_surah_audio(surah_id: int, reciter_id: int = DEFAULT_RECITER_ID) -> list[dict]:
+    cache_key = f"quran:audio:{surah_id}:{reciter_id}"
+
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        resp = requests.get(
+            f"{QURAN_BASE}/recitations/{reciter_id}/by_chapter/{surah_id}",
+            params={"per_page": 300},   # সবচেয়ে বড় সূরাও ২৮৬ আয়াত — এক পাতায় সব
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        raise QuranUnavailable("Quran.com audio API unreachable") from exc
+
+    result = [
+        {
+            "verse_key": a["verse_key"],
+            "audio_url": AUDIO_CDN_BASE + a["url"],
+        }
+        for a in resp.json()["audio_files"]
+    ]
+
+    cache.set(cache_key, result, 60 * 60 * 24 * 30)
+    return result
