@@ -81,16 +81,6 @@ export default function QuranPage() {
                             href={`/quran/${s.id}`}
                             className="flex items-center justify-between rounded-xl border p-4 hover:bg-emerald-50 transition"
                         >
-                            {/* <div>
-                                <p className="font-semibold">
-                                    {s.id}. {s.name_bengali}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    {s.verses_count} আয়াত ·{" "}
-                                    {s.revelation_place === "makkah" ? "মাক্কী" : "মাদানী"}
-                                </p>
-                            </div>
-                            <span className="text-xl" dir="rtl">{s.name_arabic}</span> */}
                             <div>
                                 <p className="font-semibold">
                                     {s.id}. {s.name_bn_pronunciation}
