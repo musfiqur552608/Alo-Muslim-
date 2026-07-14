@@ -15,6 +15,8 @@ type Surah = {
 export default function QuranPage() {
     const [surahs, setSurahs] = useState<Surah[] | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [query, setQuery] = useState("");
+    const [place, setPlace] = useState<"all" | "makkah" | "madinah">("all");
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/surahs/`)
@@ -29,11 +31,49 @@ export default function QuranPage() {
     if (error) return <p className="p-8 text-red-600">{error}</p>;
     if (!surahs) return <p className="p-8">লোড হচ্ছে…</p>;
 
+    const q = query.trim().toLowerCase();
+    const visibleSurahs = surahs.filter((s) => {
+        const matchesQuery =
+            q === "" ||
+            s.name_bengali.includes(query.trim()) ||
+            s.name_simple.toLowerCase().includes(q);
+
+        const matchesPlace = place === "all" || s.revelation_place === place;
+
+        return matchesQuery && matchesPlace;
+    });
+
     return (
         <main className="mx-auto max-w-2xl p-8">
             <h1 className="text-2xl font-bold mb-6">আল-কুরআন 📖</h1>
+            <input
+                type="text"
+                placeholder="সূরা খুঁজুন (বাংলা বা ইংরেজি নামে)…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}             
+                className="mb-4 w-full rounded-xl border p-3"
+            />
+
+            <div className="mb-6 flex gap-2">
+                {(
+                    [
+                        ["all", "সব"],
+                        ["makkah", "মাক্কী"],
+                        ["madinah", "মাদানী"],                              
+                    ] as const
+                ).map(([value, label]) => (
+                    <button
+                        key={value}
+                        onClick={() => setPlace(value)}                    
+                        className={`rounded-full border px-4 py-1 text-sm ${place === value ? "bg-emerald-600 text-white" : "hover:bg-emerald-50"
+                            }`}
+                    >
+                        {label}
+                    </button>
+                ))}
+            </div>
             <ul className="grid gap-3 sm:grid-cols-2">
-                {surahs.map((s) => (
+                {visibleSurahs.map((s) => (
                     <li key={s.id}>
                         <Link
                             href={`/quran/${s.id}`}
